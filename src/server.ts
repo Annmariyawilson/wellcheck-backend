@@ -3,7 +3,7 @@ import routes from "./routes";
 import cors from "cors";
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -13,7 +13,6 @@ app.get("/hello", (req: Request, res: Response) => {
   res.json({ message: "Hello API working!" });
 });
 app.use("/api", routes);
-
 
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
