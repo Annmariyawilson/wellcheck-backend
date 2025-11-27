@@ -3,14 +3,14 @@ import { comparePassword, hashPassword } from "../util";
 import { supabase } from "../supabaseClient";
 
 export const createUser = async (req: Request, res: Response) => {
-  const { username, password, class_id } = req.body;
+  const { username, password, class_id, phone, dob } = req.body;
 
   try {
     const hashedPassword = await hashPassword(password);
 
     const { data, error } = await supabase
       .from("student")
-      .insert([{ username, password: hashedPassword, class_id  }])
+      .insert([{ username, password: hashedPassword, class_id, phone, dob }])
       .select()
       .single();
 
@@ -90,3 +90,52 @@ export const getUsers = async (_req: Request, res: Response) => {
     });
   }
 };
+
+// FORGOT PASSWORD
+
+export const forgotPasswordStudent = async (req: Request, res: Response) => {
+  const { phone, dob, newPassword } = req.body;
+
+  const { data, error } = await supabase
+    .from("student")
+    .select("*")
+    .eq("phone", phone)
+    .eq("dob", dob)
+    .single();
+
+  if (error || !data)
+    return res.status(400).json({ message: "Invalid details" });
+
+  const hashed = await hashPassword(newPassword);
+
+  await supabase
+    .from("student")
+    .update({ password: hashed })
+    .eq("id", data.id);
+
+  res.status(200).json({
+    message: "Password changed successfully",
+    username: data.username,
+  });
+};
+
+// TEACHER RESET STUDENT PASSWORD
+
+export const teacherResetStudentPassword = async ( req: Request, res: Response ) => {
+  const { student_id, newPassword } = req.body;
+
+  const hashed = await hashPassword(newPassword);
+
+  const { error } = await supabase
+    .from("student")
+    .update({ password: hashed })
+    .eq("id", student_id);
+
+  if (error)
+    return res.status(400).json({ message: "Failed to update password" });
+
+  res.status(200).json({
+    message: "Password reset successfully",
+  });
+};
+

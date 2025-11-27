@@ -1,11 +1,14 @@
 import { Router } from "express";
 import {
   createUser,
+  forgotPasswordStudent,
   getUsers,
   loginStudent,
+  teacherResetStudentPassword,
 } from "./controllers/userController";
 import {
   createTeacher,
+  forgotPasswordTeacher,
   getTeacherById,
   loginTeacher,
 } from "./controllers/teacherController";
@@ -25,11 +28,15 @@ const router = Router();
 router.post("/student-signup", createUser);
 router.get("/students", getUsers);
 router.post("/student/login", loginStudent);
+router.post("/student/forgot-password", forgotPasswordStudent);
+
 
 // TEACHER ROUTES
 router.post("/teacher/signup", createTeacher);
 router.post("/teacher/login", loginTeacher);
 router.get("/teacher/:id", getTeacherById);
+router.post("/teacher/forgot-password", forgotPasswordTeacher);
+router.post("/teacher/reset-student-password", teacherResetStudentPassword);
 
 router.get("/teacher/class-activity/:id", getTeacherClassActivity);
 router.post("/teacher/class-weekly-activity/:id", studentWeeklyReports);

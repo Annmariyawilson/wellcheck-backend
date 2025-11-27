@@ -4,14 +4,14 @@ import { hashPassword, comparePassword } from "../util";
 
 // CREATE TEACHER
 export const createTeacher = async (req: Request, res: Response) => {
-  const { username, password, class_id } = req.body;
+  const { username, password, class_id, phone, dob } = req.body;
 
   try {
     const hashed = await hashPassword(password);
-
+    console.log(username, password, class_id, phone, dob);
     const { data, error } = await supabase
       .from("teacher")
-      .insert([{ username, password: hashed,class_id }])
+      .insert([{ username, password: hashed, class_id, phone, dob }])
       .select()
       .single();
 
@@ -60,3 +60,30 @@ export const getTeacherById = async (req: Request, res: Response) => {
   res.status(200).json({ data });
 };
 
+// TEACHER FORGOT PASSWORD
+
+export const forgotPasswordTeacher = async (req: Request, res: Response) => {
+  const { phone, dob, newPassword } = req.body;
+
+  const { data: teacher, error } = await supabase
+    .from("teacher")
+    .select("*")
+    .eq("phone", phone)
+    .eq("dob", dob)
+    .single();
+
+  if (error || !teacher)
+    return res.status(400).json({ message: "Invalid details" });
+
+  const hashed = await hashPassword(newPassword);
+
+  await supabase
+    .from("teacher")
+    .update({ password: hashed })
+    .eq("id", teacher.id);
+
+  res.status(200).json({
+    message: "Password changed successfully",
+    username: teacher.username,
+  });
+};

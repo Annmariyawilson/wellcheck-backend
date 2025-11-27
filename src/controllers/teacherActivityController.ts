@@ -102,9 +102,8 @@ export const studentWeeklyReports = async (req: Request, res: Response) => {
     const today = dayjs().endOf("day");
     const startDate = today.subtract(6, "day").startOf("day");
 
-    // --------------------------------------
     // 1️ Fetch last 7 days mood activity
-    // --------------------------------------
+
     const { data, error } = await supabase
       .from("student_activity")
       .select(
@@ -113,13 +112,14 @@ export const studentWeeklyReports = async (req: Request, res: Response) => {
         value,
         created_at,
         student_id,
-        student!inner(class_id)
+        student!inner(username,class_id)
       `
       )
       .eq("value", moodValue)
       .eq("student.class_id", class_id)
       .gte("created_at", startDate.toISOString())
-      .lte("created_at", today.toISOString());
+      .lte("created_at", today.toISOString())
+      .order("created_at", { ascending: false });
 
     if (error) {
       return res.status(500).json({
@@ -129,29 +129,27 @@ export const studentWeeklyReports = async (req: Request, res: Response) => {
       });
     }
 
-    // ---------------------------------------------------
     // 2️ Prepare last 7 days structure with all zeros
-    // ---------------------------------------------------
-    const last7Days: Record<string, number> = {};
 
-    for (let i = 0; i < 7; i++) {
+    const last7Days: Record<string, { value: number; names: string[] }> = {};
+
+    for (let i = 6; i >= 0; i--) {
       const date = today.subtract(i, "day").format("YYYY-MM-DD");
-      last7Days[date] = 0;
+      last7Days[date] = { names: [], value: 0 };
     }
 
-    // ---------------------------------------------------
     // 3️ Count moods per day
-    // ---------------------------------------------------
-    data?.forEach((item) => {
+    console.log(data);
+    data?.forEach((item: any) => {
       const date = dayjs(item.created_at).format("YYYY-MM-DD");
       if (last7Days.hasOwnProperty(date)) {
-        last7Days[date] += 1;
+        last7Days[date].value += 1;
+        last7Days[date].names.push(item.student.username);
       }
     });
 
-    // ---------------------------------------------------
     // 4️ Response
-    // ---------------------------------------------------
+
     return res.status(200).json({
       success: true,
       class_id,
